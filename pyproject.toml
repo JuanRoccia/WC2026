@@ -1,0 +1,30 @@
+[project]
+name = "wc2026-predictor"
+version = "0.1.0"
+description = "Sistema de predicción de resultados para el Mundial FIFA 2026"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+    "numpy>=1.26.0",
+    "scipy>=1.14.0",
+    "pandas>=2.2.0",
+    "jinja2>=3.1.0",
+    "python-multipart>=0.0.12",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[project.scripts]
+wc2026 = "src.main:start"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

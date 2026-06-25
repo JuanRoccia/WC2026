@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Inicio{% endblock %}
+{% block content %}
+<div class="text-center py-16">
+  <h1 class="text-5xl font-bold text-fifa-400 mb-4">WC2026 Predictor</h1>
+  <p class="text-lg text-gray-400 mb-8">Sistema de predicción de resultados para el Mundial FIFA 2026</p>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+    <a href="/ui/fixtures" class="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-fifa-500 transition">
+      <div class="text-3xl mb-2">⚽</div>
+      <div class="font-semibold text-fifa-300">72 Partidos</div>
+      <div class="text-sm text-gray-500">Predicciones con escalera de 6 modelos</div>
+    </a>
+    <a href="/ui/simulation" class="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-fifa-500 transition">
+      <div class="text-3xl mb-2">🏆</div>
+      <div class="font-semibold text-fifa-300">Simulación Monte Carlo</div>
+      <div class="text-sm text-gray-500">10,000 simulaciones del torneo</div>
+    </a>
+    <a href="/ui/lab" class="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-fifa-500 transition">
+      <div class="text-3xl mb-2">🔬</div>
+      <div class="font-semibold text-fifa-300">Predictor Lab</div>
+      <div class="text-sm text-gray-500">Compará dos selecciones</div>
+    </a>
+  </div>
+  <div class="mt-8 text-sm text-gray-600">
+    <span>{{ fixture_count }} partidos</span> &middot;
+    <span>{{ group_count }} grupos</span> &middot;
+    <span>{{ predictor_count }} predictores</span>
+  </div>
+</div>
+{% endblock %}

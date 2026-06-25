@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WC2026 Predictor - {% block title %}Inicio{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { colors: { fifa: { 50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81' } } } } }
+  </script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+  <nav class="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="flex items-center justify-between h-14">
+        <a href="/ui/" class="text-lg font-bold text-fifa-400 tracking-tight">WC2026 Predictor</a>
+        <div class="flex gap-1 text-sm overflow-x-auto">
+          <a href="/ui/fixtures" class="px-3 py-1.5 rounded hover:bg-gray-800 whitespace-nowrap{% if active == 'fixtures' %} bg-gray-800 text-fifa-300{% endif %}">Partidos</a>
+          <a href="/ui/groups" class="px-3 py-1.5 rounded hover:bg-gray-800 whitespace-nowrap{% if active == 'groups' %} bg-gray-800 text-fifa-300{% endif %}">Grupos</a>
+          <a href="/ui/simulation" class="px-3 py-1.5 rounded hover:bg-gray-800 whitespace-nowrap{% if active == 'simulation' %} bg-gray-800 text-fifa-300{% endif %}">Simulación</a>
+          <a href="/ui/performance" class="px-3 py-1.5 rounded hover:bg-gray-800 whitespace-nowrap{% if active == 'performance' %} bg-gray-800 text-fifa-300{% endif %}">Performance</a>
+          <a href="/ui/lab" class="px-3 py-1.5 rounded hover:bg-gray-800 whitespace-nowrap{% if active == 'lab' %} bg-gray-800 text-fifa-300{% endif %}">Predictor Lab</a>
+          <a href="/ui/rankings" class="px-3 py-1.5 rounded hover:bg-gray-800 whitespace-nowrap{% if active == 'rankings' %} bg-gray-800 text-fifa-300{% endif %}">Rankings</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Rankings{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div>
+    <h2 class="text-2xl font-bold mb-4">Top 30 Elo</h2>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-gray-400 border-b border-gray-800">
+          <th class="pb-2 pr-2">#</th>
+          <th class="pb-2 pr-2">Equipo</th>
+          <th class="pb-2 text-right">Rating</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in elo_rankings %}
+        <tr class="border-b border-gray-800/50">
+          <td class="py-1.5 pr-2 text-gray-500">{{ r.rank }}</td>
+          <td class="py-1.5 pr-2">{{ r.team }}</td>
+          <td class="py-1.5 text-right font-mono">{{ "%.0f"|format(r.rating) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h2 class="text-2xl font-bold mb-4">Top 30 FIFA</h2>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-gray-400 border-b border-gray-800">
+          <th class="pb-2 pr-2">#</th>
+          <th class="pb-2 pr-2">Equipo</th>
+          <th class="pb-2 text-right">Puntos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in fifa_rankings %}
+        <tr class="border-b border-gray-800/50">
+          <td class="py-1.5 pr-2 text-gray-500">{{ r.rank }}</td>
+          <td class="py-1.5 pr-2">{{ r.team }}</td>
+          <td class="py-1.5 text-right font-mono">{{ "%.0f"|format(r.points) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

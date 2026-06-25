@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Predictor Lab{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Predictor Lab</h2>
+<p class="text-gray-500 mb-6">Compará dos selecciones cara a cara</p>
+<form id="lab-form" class="flex flex-wrap gap-4 items-end mb-6">
+  <div>
+    <label class="block text-sm text-gray-400 mb-1">Equipo A</label>
+    <select id="home-team" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white w-48">
+      <option value="">Seleccionar...</option>
+      {% for team in teams %}
+      <option value="{{ team.id }}">{{ team.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm text-gray-400 mb-1">Equipo B</label>
+    <select id="away-team" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white w-48">
+      <option value="">Seleccionar...</option>
+      {% for team in teams %}
+      <option value="{{ team.id }}">{{ team.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="bg-fifa-600 hover:bg-fifa-500 px-6 py-2 rounded-lg font-semibold transition">Predecir</button>
+</form>
+<div id="lab-result" class="hidden">
+  <div class="bg-gray-900 rounded-xl p-6">
+    <div class="text-center mb-4">
+      <span id="lab-home-name" class="text-xl font-bold"></span>
+      <span class="text-gray-500 mx-3">vs</span>
+      <span id="lab-away-name" class="text-xl font-bold"></span>
+    </div>
+    <div class="flex justify-center gap-6 text-center">
+      <div>
+        <div id="lab-home-pct" class="text-3xl font-bold text-green-400"></div>
+        <div id="lab-home-label" class="text-sm text-gray-500"></div>
+      </div>
+      <div>
+        <div id="lab-draw-pct" class="text-3xl font-bold text-yellow-400"></div>
+        <div class="text-sm text-gray-500">Empate</div>
+      </div>
+      <div>
+        <div id="lab-away-pct" class="text-3xl font-bold text-blue-400"></div>
+        <div id="lab-away-label" class="text-sm text-gray-500"></div>
+      </div>
+    </div>
+    <div class="flex justify-center gap-8 text-center mt-4 text-sm">
+      <div>
+        <div id="lab-home-goals" class="text-lg font-mono text-fifa-300"></div>
+        <div class="text-xs text-gray-500">Goles A</div>
+      </div>
+      <div>
+        <div id="lab-score" class="text-lg font-mono text-white font-bold"></div>
+        <div class="text-xs text-gray-500">Score prob.</div>
+      </div>
+      <div>
+        <div id="lab-away-goals" class="text-lg font-mono text-fifa-300"></div>
+        <div class="text-xs text-gray-500">Goles B</div>
+      </div>
+    </div>
+    <div class="text-center text-sm text-gray-500 mt-3">
+      Top pick: <span id="lab-top-pick" class="text-white font-semibold"></span>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById('lab-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const home = document.getElementById('home-team');
+    const away = document.getElementById('away-team');
+    if (!home.value || !away.value) return;
+    try {
+      const res = await fetch(`/predictor/lab?home=${encodeURIComponent(home.value)}&away=${encodeURIComponent(away.value)}`);
+      const data = await res.json();
+      const homeName = home.selectedOptions[0].text;
+      const awayName = away.selectedOptions[0].text;
+      document.getElementById('lab-home-name').textContent = homeName;
+      document.getElementById('lab-away-name').textContent = awayName;
+      document.getElementById('lab-home-label').textContent = homeName;
+      document.getElementById('lab-away-label').textContent = awayName;
+      document.getElementById('lab-home-pct').textContent = data.home_win + '%';
+      document.getElementById('lab-draw-pct').textContent = data.draw + '%';
+      document.getElementById('lab-away-pct').textContent = data.away_win + '%';
+      document.getElementById('lab-top-pick').textContent = data.top_pick;
+      if (data.most_likely_score) {
+        document.getElementById('lab-home-goals').textContent = data.expected_goals.home;
+        document.getElementById('lab-away-goals').textContent = data.expected_goals.away;
+        document.getElementById('lab-score').textContent = data.most_likely_score[0] + '-' + data.most_likely_score[1];
+      }
+      document.getElementById('lab-result').classList.remove('hidden');
+    } catch (err) {
+      alert('Error al obtener predicción');
+    }
+  });
+</script>
+{% endblock %}

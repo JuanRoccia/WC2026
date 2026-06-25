@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Partido {{ fixture_id }}{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <a href="/ui/fixtures" class="text-fifa-400 hover:underline">&larr; Volver a partidos</a>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2">
+    <div class="bg-gray-900 rounded-xl p-6 mb-6">
+      <div class="text-center mb-4">
+        <span class="text-sm text-gray-500">Grupo {{ detail.fixture_id.split('_')[0] }}</span>
+      </div>
+      <div class="flex justify-center items-center gap-4 text-lg font-bold">
+        <span class="text-right flex-1">{{ detail.home_team }}</span>
+        <span class="text-gray-500 text-base">vs</span>
+        <span class="flex-1">{{ detail.away_team }}</span>
+      </div>
+      <div class="flex justify-center items-center gap-6 text-2xl font-bold mt-1">
+        <span class="text-right flex-1 text-fifa-300">{{ detail.best_prediction.expected_goals.home }}</span>
+        <span class="text-gray-500 text-base">—</span>
+        <span class="flex-1 text-fifa-300">{{ detail.best_prediction.expected_goals.away }}</span>
+      </div>
+      {% if detail.best_prediction %}
+      <div class="flex justify-center gap-4 mt-4 text-sm">
+        <div class="text-center">
+          <div class="text-green-400 text-lg font-bold">{{ "%.1f"|format(detail.best_prediction.home_win) }}%</div>
+          <div class="text-gray-500">{{ detail.home_team }}</div>
+        </div>
+        <div class="text-center">
+          <div class="text-yellow-400 text-lg font-bold">{{ "%.1f"|format(detail.best_prediction.draw) }}%</div>
+          <div class="text-gray-500">Empate</div>
+        </div>
+        <div class="text-center">
+          <div class="text-blue-400 text-lg font-bold">{{ "%.1f"|format(detail.best_prediction.away_win) }}%</div>
+          <div class="text-gray-500">{{ detail.away_team }}</div>
+        </div>
+      </div>
+      <div class="text-center text-sm text-gray-500 mt-2">
+        Predictor: <span class="text-fifa-300">{{ detail.selected_predictor }}</span>
+        {% if detail.best_prediction.most_likely_score %}
+        &middot; Score más probable: <span class="text-white font-mono">{{ detail.best_prediction.most_likely_score[0] }}-{{ detail.best_prediction.most_likely_score[1] }}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    <h3 class="text-lg font-semibold mb-3">Escalera de Predictores</h3>
+    <div class="space-y-2">
+      {% for p in detail.ladder %}
+      <div class="bg-gray-900 rounded-lg p-4 {% if p.is_degraded %}opacity-60{% endif %}">
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-medium {% if loop.first %}text-fifa-300{% endif %}">{{ p.predictor }}</span>
+          <span class="text-xs text-gray-500">Prioridad {{ loop.index }}</span>
+        </div>
+        <div class="flex gap-3 text-sm">
+          <span class="text-green-400">{{ "%.1f"|format(p.home_win) }}%</span>
+          <span class="text-yellow-400">{{ "%.1f"|format(p.draw) }}%</span>
+          <span class="text-blue-400">{{ "%.1f"|format(p.away_win) }}%</span>
+          {% if p.is_degraded %}<span class="text-orange-400 text-xs ml-auto">Degradado</span>{% endif %}
+        </div>
+        <div class="flex gap-3 text-xs text-gray-500">
+          <span>{{ detail.home_team }}</span>
+          <span>Empate</span>
+          <span>{{ detail.away_team }}</span>
+        </div>
+        {% if p.explanation %}
+        <div class="text-xs text-gray-500 mt-1">{{ p.explanation }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
