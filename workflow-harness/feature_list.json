@@ -1,0 +1,310 @@
+{
+  "project": "WC2026 Predictor",
+  "description": "Sistema de predicción de resultados para el Mundial FIFA 2026. Modelos estadísticos, simulación Monte Carlo y web UI.",
+  "rules": {
+    "one_feature_at_a_time": true,
+    "require_tests_to_close": true,
+    "valid_status": ["pending", "in_progress", "done", "blocked"],
+    "valid_priority": ["high", "medium", "low"]
+  },
+  "features": [
+    {
+      "id": 1,
+      "name": "project_structure",
+      "title": "Estructura base del proyecto Python",
+      "description": "Crear la estructura de directorios, requirements.txt, pyproject.toml y configuración base de FastAPI.",
+      "priority": "high",
+      "acceptance": [
+        "Existe src/ con models/, data/, predictors/, probability/, simulation/, services/, web/",
+        "requirements.txt con FastAPI, Uvicorn, pandas, numpy, scipy, pydantic, pytest, httpx",
+        "src/main.py como entry point de FastAPI con reload",
+        "src/config.py con Settings vía pydantic-settings"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 2,
+      "name": "data_import",
+      "title": "Importación de datos semilla",
+      "description": "CSV de grupos WC2026, resultados históricos, rankings FIFA, ratings Elo, goleadores.",
+      "priority": "high",
+      "acceptance": [
+        "data/wc2026_groups.csv — 12 grupos, 48 selecciones",
+        "data/historical_results.csv — ~49,445 partidos desde 1872",
+        "data/elo_snapshot.csv — 242 equipos con rating Elo al 2026-06-24",
+        "data/fifa_rankings.csv — 211 equipos con ranking FIFA al 2026-06-11",
+        "data/goalscorers.csv — ~41,000 registros de goleadores históricos",
+        "CsvLoader en src/data/loader.py con métodos por tipo de datos",
+        "load_all_data() retorna dict con groups, fixtures, elo_ratings, fifa_ratings, historical"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 3,
+      "name": "models_layer",
+      "title": "Modelos de datos (Pydantic)",
+      "description": "Modelos Pydantic para Team, Group, Fixture, MatchResult, Prediction, TournamentProjection, etc.",
+      "priority": "high",
+      "acceptance": [
+        "Team, Group, Fixture, MatchResult, FixtureContext en fixture.py",
+        "OutcomeProbabilities, MatchPrediction, MatchPredictionResult en prediction.py",
+        "TournamentProjection, TeamTournamentProbability, KnockoutStage en tournament.py",
+        "Rating, RatingType en rating.py",
+        "EvaluationRow en evaluation.py"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 4,
+      "name": "predictor_ladder",
+      "title": "Escalera de 6 predictores jerárquicos",
+      "description": "NullModel, FifaRankingModel, EloModel, RecentFormModel, GoalModel (Poisson-Dixon-Coles), GoalPlusRecentContextModel + FinalPredictionSelector.",
+      "priority": "high",
+      "acceptance": [
+        "IPredictor abstracto con Name, Priority, predict()",
+        "NullModel — 33/33/33 uniforme",
+        "FifaRankingModel — puntos FIFA normalizados con decay",
+        "EloModel — rating Elo con expectación y ajuste por rendimiento",
+        "RecentFormModel — delta de forma con decaimiento exponencial",
+        "GoalModel — ataque/defensa Poisson con corrección Dixon-Coles",
+        "GoalPlusRecentContextModel — GoalModel + lesiones + disponibilidad",
+        "FinalPredictionSelector — calibración Elo/FIFA, degradación controlada"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 5,
+      "name": "probability_math",
+      "title": "Módulo de probabilidad y estadística",
+      "description": "Poisson, Dixon-Coles, Elo expectation, Brier, RPS, LogLoss, scoreline_matrix, normalización.",
+      "priority": "high",
+      "acceptance": [
+        "elo_expectation(a,b) = 1/(1+10^((b-a)/400))",
+        "poisson_prob(k, lam) con numpy",
+        "dixon_coles_tau(i,j,rho) para correlación marcadores bajos",
+        "scoreline_matrix(lam_h, lam_a, rho) — matriz 9x9",
+        "brier_score, rps_score, log_loss_score",
+        "OutcomeProbabilities.normalize()"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 6,
+      "name": "monte_carlo_simulation",
+      "title": "Motor de simulación Monte Carlo",
+      "description": "Simular el Mundial 2026: fase de grupos, desempates, bracket de eliminatorias, 10,000 simulaciones.",
+      "priority": "high",
+      "acceptance": [
+        "Simulación de 12 grupos de 4 equipos (6 partidos c/u)",
+        "Criterios de desempate: puntos -> h2h -> diff -> goles -> FIFA ranking",
+        "Selección de 8 mejores terceros",
+        "Bracket de 32 equipos con eliminatorias directas",
+        "10,000 simulaciones configurables vía Settings",
+        "Seed reproducible para debug",
+        "Probabilidades: champ, final, semi, cuartos, grupos",
+        "Cache de probabilidades precomputadas para performance"
+      ],
+      "status": "done",
+      "notes": "Optimizado: 2256 permutaciones precomputadas al startup, tabla de grupos inline (sin deep copy), 10K sims en ~9s."
+    },
+    {
+      "id": 7,
+      "name": "web_api",
+      "title": "API REST y web UI",
+      "description": "Endpoints REST funcionales + templates HTML con Jinja2/Tailwind.",
+      "priority": "high",
+      "acceptance": [
+        "GET /health — healthcheck con conteo de fixtures/grupos/predictores",
+        "GET /fixtures — lista de 72 fixtures con predicciones y cache",
+        "GET /fixtures/{id} — predicción detallada con escalera completa",
+        "GET /groups — grupos con equipos y fixtures",
+        "GET /simulation — resultados de Monte Carlo",
+        "GET /performance — métricas de evaluación",
+        "GET /predictor/lab?home=X&away=Y — comparar dos equipos",
+        "GET /rankings/elo — top 30 Elo",
+        "GET /rankings/fifa — top 30 FIFA",
+        "POST /fixtures/{id}/result — ingresar resultado real",
+        "Templates HTML con Jinja2 para visualización"
+      ],
+      "status": "done",
+      "notes": "API REST completa + templates HTML con Jinja2 + Tailwind (CDN), 8 vistas, navegación responsive."
+    },
+    {
+      "id": 8,
+      "name": "evaluation_service",
+      "title": "Evaluación de predicciones",
+      "description": "Evaluar contra resultados reales: Brier, RPS, LogLoss, TopPickAccuracy, ranking de modelos.",
+      "priority": "medium",
+      "acceptance": [
+        "Evaluación contra resultados ingresados por POST",
+        "Cálculo de Brier Score, RPS, Log Loss",
+        "Top Pick Accuracy",
+        "Ranking de modelos por performance",
+        "Overconfident failures detection",
+        "Exportación de reportes"
+      ],
+      "status": "in_progress",
+      "notes": "EvaluationService existe con estructura básica pero sin almacenamiento persistente ni reportes detallados."
+    },
+    {
+      "id": 9,
+      "name": "fixtures_wc2026",
+      "title": "Generación de fixtures del Mundial 2026",
+      "description": "Generar los 72 partidos de fase de grupos (6 por grupo x 12 grupos) y bracket de eliminatorias.",
+      "priority": "high",
+      "acceptance": [
+        "72 partidos de fase de grupos generados automáticamente",
+        "FixtureContext con sede, neutralidad, datos de lesiones",
+        "Bracket de eliminatorias con 32 equipos"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 10,
+      "name": "data_integration",
+      "title": "Integración con APIs externas",
+      "description": "Actualización automática de rankings FIFA, ratings Elo, datos de lesiones y disponibilidad.",
+      "priority": "low",
+      "acceptance": [
+        "Actualización automática de rankings FIFA desde web",
+        "Actualización de ratings Elo desde eloratings.net",
+        "Integración con API de lesiones/disponibilidad (opcional)",
+        "Refresh manual endpoint"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 11,
+      "name": "tests_and_docs",
+      "title": "Tests y documentación",
+      "description": "Tests unitarios y de integración para todos los módulos. init.sh funcional. README completo.",
+      "priority": "medium",
+      "acceptance": [
+        "Tests para cada predictor (casos borde incluidos)",
+        "Tests para funciones de probabilidad (Poisson, Dixon-Coles, Elo)",
+        "Tests para simulación Monte Carlo",
+        "Tests para servicios y API endpoints",
+        "init.sh verifica entorno e importaciones",
+        "README.md con setup, arquitectura, API docs"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 12,
+      "name": "simulation_optimization",
+      "title": "Optimización de simulación Monte Carlo",
+      "description": "Precomputar todas las permutaciones de matchup probabilities antes de correr las 10K iteraciones para evitar 790K llamadas a predict_direct.",
+      "priority": "high",
+      "acceptance": [
+        "Precomputación de 48x47=2256 probabilidades al startup",
+        "MonteCarloSimulator usa cache en _sample_match en lugar de llamar predict_fn",
+        "Simulación completa en < 30 segundos",
+        "Cache invalidado si se actualizan datos de equipos"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 13,
+      "name": "frontend_ui",
+      "title": "Interfaz web con Jinja2 + Tailwind",
+      "description": "Templates HTML para visualizar fixtures, predicciones, simulación y performance. Diseño responsive.",
+      "priority": "high",
+      "acceptance": [
+        "Página principal con resumen y navegación",
+        "Vista de fixtures con predicciones y scoreline matrix",
+        "Vista de grupos con tabla de posiciones",
+        "Panel de simulación con probabilidades por equipo",
+        "Vista de performance con métricas gráficas",
+        "Predictor Lab interactivo",
+        "Rankings Elo y FIFA"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 14,
+      "name": "fix_prediction_quality",
+      "title": "Corregir calidad de predicciones (goles y variabilidad)",
+      "description": "Resolver que most_likely_score siempre sea (0,0) y que todas las predicciones tengan los mismos porcentajes. Falta computar attack_strength/defense_vulnerability desde datos históricos en PredictionService._build_context().",
+      "priority": "high",
+      "acceptance": [
+        "GoalPlusRecentContextModel ya no devuelve most_likely_score=(0,0)",
+        "PredictionService._build_context() computa attack_strength, defense_vulnerability, avg_home/away_goals desde historical_results.csv",
+        "Las predicciones dejan de ser idénticas entre equipos de distinto nivel",
+        "scoreline_matrix se muestra correctamente en fixture_detail",
+        "Tests de regresión para los predictores de goles"
+      ],
+      "status": "done",
+      "notes": "Fix completo: _build_context() ahora computa attack_strength, defense_vulnerability, avg_goals desde historical_results.csv (2022+). GoalModel y GoalPlusRecentContextModel producen predicciones diferenciadas por equipo. name_fix para congo_dr/curacao/czechia. Optimizado con precomputación al startup (~7s)."
+    },
+    {
+      "id": 15,
+      "name": "fix_ui_labels",
+      "title": "Reemplazar 'Local/Empate/Visitante' por nombres de equipos en UI",
+      "description": "En fixtures, fixture_detail y predictor_lab: los labels 'Local', 'Empate', 'Visitante' son engañosos porque no hay local/visitante real en un torneo en sede neutral (salvo EEUU). Mostrar directamente los nombres de los equipos.",
+      "priority": "high",
+      "acceptance": [
+        "fixtures.html: columnas 'Local%'/'Emp%'/'Visit%' reemplazadas por header con nombres de equipos + 'Empate'",
+        "fixture_detail.html: labels 'Local'/'Visitante' reemplazados por los nombres de los equipos",
+        "predictor_lab.html: labels 'Local'/'Visitante' reemplazados por nombres de equipos seleccionados",
+        "El JSON API también refleja el cambio semántico"
+      ],
+      "status": "done",
+      "notes": "fixtures.html: headers 'Local%'/'Emp%'/'Visit%' → 'Equipo A%'/'Emp%'/'Equipo B%'. fixture_detail.html: labels locales/visitantes → nombres reales de equipos. predictor_lab.html: selects y resultado muestran nombres de equipos."
+    },
+    {
+      "id": 16,
+      "name": "add_most_likely_score_lab",
+      "title": "Agregar resultado más probable de goles al Predictor Lab",
+      "description": "El Predictor Lab muestra porcentajes de resultado (Local/Empate/Visitante) pero no muestra el score más probable ni goles esperados. Agregar expected_goals y most_likely_score.",
+      "priority": "high",
+      "acceptance": [
+        "/predictor/lab endpoint devuelve expected_home_goals, expected_away_goals, most_likely_score",
+        "predictor_lab.html muestra goles esperados y score más probable",
+        "Se visualiza en el mismo layout tipo cara a cara"
+      ],
+      "status": "done",
+      "notes": "Route /predictor/lab ahora devuelve expected_goals + most_likely_score. Template predictor_lab.html muestra bloque con 'Goles A', 'Score prob.', 'Goles B'. JS parsea nombres de equipos del DOM."
+    },
+    {
+      "id": 17,
+      "name": "seed_real_results",
+      "title": "Cargar resultados reales de partidos ya jugados del Mundial 2026",
+      "description": "Buscar y cargar los resultados reales de los partidos del Mundial 2026 jugados hasta la fecha actual (2026-06-25) para comparar nuestras predicciones vs resultados reales.",
+      "priority": "medium",
+      "acceptance": [
+        "Resultados reales cargados vía POST /fixtures/{id}/result o seed script",
+        "La vista /performance y /ui/performance muestran la comparación",
+        "Brier, RPS, LogLoss calculados contra resultados reales"
+      ],
+      "status": "done",
+      "notes": "scripts/seed_real_results.py carga 54 resultados reales (11-jun al 25-jun). Accuracy del modelo: 64.8%. Name mapping: turkiye→turkey, dr_congo→congo_dr. SWAPPED flag cuando el local/visitante real no coincide con el fixture interno."
+    },
+    {
+      "id": 18,
+      "name": "simulation_progress_bar",
+      "title": "Barra de progreso para simulación Monte Carlo",
+      "description": "Mientras se ejecuta la simulación Monte Carlo (10K iteraciones), mostrar una barra de progreso en la UI para que el usuario sepa que el proceso está en marcha.",
+      "priority": "medium",
+      "acceptance": [
+        "La vista /ui/simulation muestra una barra de progreso mientras se ejecuta la simulación",
+        "El endpoint /simulation acepta un parámetro opcional para SSE o polling de progreso",
+        "La experiencia de usuario mejora al saber cuánto falta para completar"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 19,
+      "name": "daily_predictions",
+      "title": "Predicciones del día — filtrar fixtures por fecha",
+      "description": "Agregar una sección en la UI para seleccionar una fecha y ver las predicciones de todos los partidos de ese día. Requiere poblar el campo kickoff en los fixtures.",
+      "priority": "medium",
+      "acceptance": [
+        "Campo kickoff poblado en cada fixture (fecha real del partido)",
+        "Endpoint GET /fixtures/by-date?date=YYYY-MM-DD devuelve predicciones de ese día",
+        "Vista /ui/fixtures/by-date con selector de fecha y tabla de resultados",
+        "Los partidos ya jugados muestran el resultado real, los futuros la predicción"
+      ],
+      "status": "pending"
+    }
+  ]
+}

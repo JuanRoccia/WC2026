@@ -32,6 +32,3 @@ htmlcov/
 
 # Workflow harness
 workflow-harness/bash.exe.stackdump
-
-# Embedded workflow-harness repo
-workflow-harness/

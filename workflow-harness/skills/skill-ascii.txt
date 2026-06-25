@@ -1,0 +1,277 @@
+bien necesito skills para mejorar el diseño de banners cli:
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ██████╗ ██████╗ ██████╗ ███████╗    ███████╗ ██╗ ██████╗ ██╗  ██╗ ║
+║  ██╔══██╗██╔══██╗██╔══██╗██╔════╝    ██╔══██╗██║██╔════╝ ██║  ██║ ║
+║  ██████╔╝██████╔╝██████╔╝█████╗      ███████║██║██║     ███████║ ║
+║  ██╔══██╗██╔═══╝ ██╔══██╗██╔══╝      ██╔══██║██║██║     ██╔══██║ ║
+║  ██║  ██║██║     ██║  ██║███████╗    ██║  ██║██║╚██████╗██║  ██║ ║
+║  ╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚══════╝    ╚═╝  ╚═╝╚═╝ ╚═════╝╚═╝  ╚═╝ ║
+║                                                                ║
+║         Modular Network Recon Framework v2.0                      ║
+╚═══════════════════════════════════════════════════════════════════════╝Show more11:44Mirá el banner actual y las mejoras que puedo hacer:
+Problemas que veo:
+
+El ASCII art está desalineado (los caracteres no cuadran bien en terminales con fuentes variables)
+Los bordes tienen inconsistencias en el ancho (la línea inferior es más corta)
+Falta info útil: versión, autor, módulos cargados
+Podría tener color con colorama o rich
+
+Te muestro un preview visual del banner mejorado y abajo te doy el código Python:
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  }
+VvisualizeVvisualize show_widgetAhora el código Python para reemplazar el banner en openhunter.py o donde lo tengas:
+pythonfrom rich.console import Console
+from rich.text import Text
+
+console = Console()
+
+def print_banner(version="2.0", target=None, output_file=None, modules=None):
+    ascii_art = [
+        " ██████╗ ██████╗ ███████╗███╗  ██╗    ██╗  ██╗██╗   ██╗███╗  ██╗",
+        "██╔═══██╗██╔══██╗██╔════╝████╗ ██║    ██║  ██║██║   ██║████╗ ██║",
+        "██║   ██║██████╔╝█████╗  ██╔██╗██║    ███████║██║   ██║██╔██╗██║",
+        "██║   ██║██╔═══╝ ██╔══╝  ██║╚████║    ██╔══██║██║   ██║██║╚████║",
+        " ██████╔╝██║     ███████╗██║ ╚███║    ██║  ██║╚██████╔╝██║ ╚███║",
+        " ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚══╝    ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚══╝",
+    ]
+
+    width = 78
+    border_top    = "╔" + "═" * width + "╗"
+    border_bot    = "╚" + "═" * width + "╝"
+    border_empty  = "║" + " " * width + "║"
+    sep           = "║  " + "─" * (width - 4) + "  ║"
+
+    console.print(f"[cyan]{border_top}[/cyan]")
+    console.print(f"[cyan]{border_empty}[/cyan]")
+
+    for line in ascii_art:
+        padded = line.ljust(width - 4)
+        console.print(f"[cyan]║[/cyan]  [bright_green]{padded}[/bright_green]  [cyan]║[/cyan]")
+
+    console.print(f"[cyan]{border_empty}[/cyan]")
+
+    subtitle = f"Modular Network Recon Framework  v{version}  │  by JuanRoccia"
+    console.print(f"[cyan]║[/cyan]  [yellow]{subtitle:<{width - 4}}[/yellow]  [cyan]║[/cyan]")
+    console.print(f"[cyan]{border_empty}[/cyan]")
+    console.print(f"[cyan]{sep}[/cyan]")
+
+    if modules:
+        mods_str = "  ".join(f"● {m}" for m in modules)
+        line = f"Modules:  {mods_str}"
+        console.print(f"[cyan]║[/cyan]  [white]Modules:[/white]  [bright_green]{'  '.join(f'● {m}' for m in modules):<{width - 12}}[/bright_green]  [cyan]║[/cyan]")
+
+    if target:
+        console.print(f"[cyan]║[/cyan]  [white]Target :[/white]  [cyan]{target:<{width - 12}}[/cyan]  [cyan]║[/cyan]")
+
+    if output_file:
+        console.print(f"[cyan]║[/cyan]  [white]Output :[/white]  [cyan]{output_file:<{width - 12}}[/cyan]  [cyan]║[/cyan]")
+
+    console.print(f"[cyan]{border_bot}[/cyan]")
+Uso:
+pythonprint_banner(
+    version="2.0",
+    target="192.168.0.0/24",
+    output_file="openhunter_20260415_044632.csv",
+    modules=["nmap", "arp", "mdns", "ssdp", "netbios", "mac-vendor"]
+)
+Instalá rich si no lo tenés:
+bashpip install rich
+Las mejoras clave: bordes alineados al ancho exacto, sección dinámica de módulos/target/output que solo aparece si se pasan los parámetros, y rich para colores sin hacks con escape codes manuales.🦅 OpenHunter v2.0
+Network reconnaissance tool like nmap + recon-ng + AI-powered analysis
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ██████╗ ██████╗ ██████╗ ███████╗    ███████╗ ██╗ ██████╗ ██╗  ██╗ ║
+║  ██╔══██╗██╔══██╗██╔══██╗██╔════╝    ██╔══██╗██║█pasted┌──(kali㉿localhost)-[~/openhunter]└─$ lsREADME.md       modulesTODO-FUTURE.md  openhunterTODO.md         openhunter.pyapi.py          openhunter_20260414_235139.csvcli.py          openhunter_20260415_044632.csvcompletions requirements.txtcore scriptsdata┌──(kali㉿localhost)-[~/openhunter]└─$bien tiene que decir OpenHunter ademas de los demas detalels que ya inlcuiste. te dejo el readme a mano tambien para comprender un poco mejorPasame una guia y el codigo listo para pasarle a opencode y que haga los arreglos necesarios. el tema es que a opnecode le cuesta un poco el tema de los banners ASCII11:49Entendido. El tema con OpenCode y los banners ASCII es que el LLM tiende a romper el alineamiento al regenerar los caracteres. La estrategia es darle el ASCII art como string literal fijo y que solo toque la lógica alrededor.
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  }
+VvisualizeVvisualize show_widget
+Ahora la guía + código listo para pasarle a OpenCode:
+
+Prompt para OpenCode
+Tarea: reemplazar la función de banner en cli.py (o donde esté definida) 
+por la versión mejorada de abajo. 
+
+REGLAS IMPORTANTES:
+1. El ASCII art es un string literal multilínea — NO lo regeneres, 
+   NO lo modifiques, cópialo exactamente como está.
+2. Solo modificá la lógica Python alrededor del string.
+3. Requerimiento nuevo: pip install rich (agregar a requirements.txt si no está)
+4. La función se llama print_banner() y recibe parámetros opcionales.
+
+Código listo — copiar tal cual
+python# banner.py  (o reemplazar la función en cli.py)
+from rich.console import Console
+from rich.text import Text
+
+console = Console()
+
+# ─── ASCII ART — NO MODIFICAR ESTE BLOQUE ────────────────────────────────────
+_ASCII_LINES = [
+    r"  ██████╗ ██████╗ ███████╗███╗  ██╗    ██╗  ██╗██╗   ██╗███╗  ██╗███████╗  ",
+    r" ██╔═══╝ ██╔══██╗██╔════╝████╗ ██║    ██║  ██║██║   ██║████╗ ██║██╔════╝  ",
+    r" ██║     ██████╔╝█████╗  ██╔██╗██║    ███████║██║   ██║██╔██╗██║█████╗    ",
+    r" ██║     ██╔═══╝ ██╔══╝  ██║╚████║    ██╔══██║██║   ██║██║╚████║██╔══╝    ",
+    r"  ██████╗██║     ███████╗██║ ╚███║    ██║  ██║╚██████╔╝██║ ╚███║███████╗  ",
+    r"  ╚═════╝╚═╝     ╚══════╝╚═╝  ╚══╝    ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚══╝╚══════╝  ",
+]
+_BANNER_WIDTH = 76  # caracteres entre los ║ bordes
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def _row(content: str = "", color: str = "cyan") -> str:
+    """Arma una fila del banner con bordes ║ y padding exacto."""
+    inner = content.ljust(_BANNER_WIDTH)
+    return f"[{color}]║[/{color}]{inner}[{color}]║[/{color}]"
+
+
+def print_banner(
+    version: str = "2.0",
+    target: str = None,
+    output_file: str = None,
+    modules: list = None,
+    interface: str = None,
+):
+    W = _BANNER_WIDTH
+    top = "╔" + "═" * W + "╗"
+    bot = "╚" + "═" * W + "╝"
+    sep = "║  " + "─" * (W - 4) + "  ║"
+    empty = _row()
+
+    console.print(f"[cyan]{top}[/cyan]")
+    console.print(empty)
+
+    # ASCII art — string literal fijo
+    for line in _ASCII_LINES:
+        console.print(f"[cyan]║[/cyan][bright_green]{line}[/bright_green][cyan]║[/cyan]")
+
+    console.print(empty)
+
+    # Línea título
+    title = f"  [yellow]OpenHunter[/yellow] [white]— Modular Network Recon Framework[/white]  [dim]│  [/dim][magenta]v{version}[/magenta][dim]  │  by JuanRoccia[/dim]"
+    console.print(f"[cyan]║[/cyan]{title}")
+
+    # Subtítulo
+    sub = "  [dim]nmap + recon-ng + AI-powered analysis[/dim]"
+    console.print(f"[cyan]║[/cyan]{sub}")
+
+    console.print(empty)
+    console.print(f"[cyan]{sep}[/cyan]")
+
+    # Módulos (dinámico)
+    if modules:
+        mods = "  ".join(f"● {m}" for m in modules)
+        mod_line = f"  [white]Módulos:[/white]  [bright_green]{mods}[/bright_green]"
+        console.print(f"[cyan]║[/cyan]{mod_line}")
+
+    # Info de sesión (opcionales)
+    if target:
+        console.print(f"[cyan]║[/cyan]  [white]Target   :[/white]  [cyan]{target}[/cyan]")
+    if interface:
+        console.print(f"[cyan]║[/cyan]  [white]Interface:[/white]  [cyan]{interface}[/cyan]")
+    if output_file:
+        console.print(f"[cyan]║[/cyan]  [white]Output   :[/white]  [dim]{output_file}[/dim]")
+
+    console.print(f"[cyan]{bot}[/cyan]")
+    console.print()
+
+Cómo llamarlo en cli.py
+pythonfrom banner import print_banner   # o de donde lo importes
+
+print_banner(
+    version="2.0",
+    target="192.168.0.0/24",
+    interface="wlan0",
+    output_file="openhunter_20260415_044632.csv",
+    modules=["nmap", "arp", "mdns", "ssdp", "netbios", "mac-vendor"],
+)
+
+Por qué esto funciona bien con OpenCode: el ASCII está en _ASCII_LINES como lista de strings raw con r"" — OpenCode no tiene razón para tocarlo porque la función solo itera sobre él. Todo el trabajo "inteligente" está en la lógica Python alrededor, que sí puede modificar sin romper nada.ok pero fiajte el banner sigue diciendo open hune, tiene que decir openhunter11:51Tenés razón, el ASCII art de 6 letras "OPENHUN" se queda corto. El problema es que "OPENHUNTER" son 10 caracteres y en ASCII art grande no entra en 78 cols sin achicar el font o partir en dos líneas.
+Las opciones reales:
+Opción A — Dos líneas: "OPEN" + "HUNTER"
+Opción B — Font más angosto (slant/thin)
+Opción C — "OPEN HUNTER" partido visualmente pero en una línea más compacta
+La más limpia para CLI es B con un font angosto. Te genero el ASCII correcto con pyfiglet para que sea reproducible:Generate OPENHUNTER ASCII art with different fontsGenerate OPENHUNTER ASCII art with different fontsLos mejores candidatos son doom (62 cols, muy legible) y slant (62 cols, estético). Te genero el código con doom que es el más claro:Get exact doom font lines for OPENHUNTERGet exact doom font lines for OPENHUNTER62 cols, entra perfecto. Ahora el preview y el código final:
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  }
+VvisualizeVvisualize show_widget
+Código final para OpenCode
+Tarea: reemplazar la función de banner en cli.py por la versión de abajo.
+
+REGLAS:
+1. El bloque _ASCII_LINES es un string literal — NO lo regeneres ni modifiques.
+2. Agregá 'rich' a requirements.txt si no está.
+3. La función existente que imprime el banner debe ser reemplazada por print_banner().
+python# ─── banner.py ────────────────────────────────────────────────────────────────
+from rich.console import Console
+
+console = Console()
+
+# ASCII art generado con pyfiglet font='doom' — NO MODIFICAR
+_ASCII_LINES = [
+    r" ___________ _____ _   _  _   _ _   _ _   _ _____ ___________",
+    r"|  _  | ___ \  ___| \ | || | | | | | | \ | |_   _|  ___| ___ \",
+    r"| | | | |_/ / |__ |  \| || |_| | | | |  \| | | | | |__ | |_/ /",
+    r"| | | |  __/|  __|| . ` ||  _  | | | | . ` | | | |  __||    / ",
+    r"\ \_/ / |   | |___| |\  || | | | |_| | |\  | | | | |___| |\ \ ",
+    r" \___/\_|   \____/\_| \_/\_| |_/\___/\_| \_/ \_/ \____/\_| \_|",
+]
+
+_W = 76  # ancho interior entre bordes ║
+
+
+def print_banner(
+    version: str = "2.0",
+    target: str = None,
+    output_file: str = None,
+    modules: list = None,
+    interface: str = None,
+):
+    top   = "[cyan]╔" + "═" * _W + "╗[/cyan]"
+    bot   = "[cyan]╚" + "═" * _W + "╝[/cyan]"
+    sep   = "[cyan]║[/cyan]  [dim]" + "─" * (_W - 4) + "[/dim]  [cyan]║[/cyan]"
+    empty = "[cyan]║[/cyan]" + " " * _W + "[cyan]║[/cyan]"
+
+    console.print(top)
+    console.print(empty)
+
+    for line in _ASCII_LINES:
+        padded = f"  {line:<{_W - 4}}  "
+        console.print(f"[cyan]║[/cyan][bright_green]{padded}[/bright_green][cyan]║[/cyan]")
+
+    console.print(empty)
+    console.print(
+        f"[cyan]║[/cyan]  [yellow]OpenHunter[/yellow] [white]— Modular Network Recon Framework[/white]"
+        f"  [dim]│  [/dim][magenta]v{version}[/magenta][dim]  │  by JuanRoccia[/dim]"
+    )
+    console.print(f"[cyan]║[/cyan]  [dim]nmap + recon-ng + AI-powered analysis[/dim]")
+    console.print(empty)
+    console.print(sep)
+
+    if modules:
+        mods = "  ".join(f"● {m}" for m in modules)
+        console.print(f"[cyan]║[/cyan]  [white]Modules :[/white][bright_green]  {mods}[/bright_green]")
+
+    if target:
+        console.print(f"[cyan]║[/cyan]  [white]Target  :[/white][cyan]  {target}[/cyan]")
+
+    if interface:
+        console.print(f"[cyan]║[/cyan]  [white]Iface   :[/white][cyan]  {interface}[/cyan]")
+
+    if output_file:
+        console.print(f"[cyan]║[/cyan]  [white]Output  :[/white][dim]  {output_file}[/dim]")
+
+    console.print(bot)
+    console.print()
+La clave es que _ASCII_LINES usa r"" (raw strings) para que las barras invertidas no se escapen, y el comentario # NO MODIFICAR le indica a OpenCode que ese bloque es intocable.
