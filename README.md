@@ -80,6 +80,30 @@ uvicorn src.main:app --reload --port 8000
 python -m src.main
 ```
 
+### Servidor (pruebas locales)
+
+**Iniciar** (de fondo, sin bloquear la terminal):
+```powershell
+$proc = Start-Process -NoNewWindow -FilePath "python" -ArgumentList "-m", "uvicorn", "src.main:app", "--host", "127.0.0.1", "--port", "8000" -PassThru
+Start-Sleep -Seconds 10
+```
+
+**Detener** (por puerto):
+```powershell
+$conn = Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue
+if ($conn) { Stop-Process -Id $conn.OwningProcess -Force; Write-Output "Server stopped" }
+```
+
+**Detener** (si guardaste el proceso con `-PassThru`):
+```powershell
+Stop-Process -Id $proc.Id -Force
+```
+
+**Verificar** que responde:
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/health"
+```
+
 ### Endpoints
 
 | Método | Ruta | Descripción |
