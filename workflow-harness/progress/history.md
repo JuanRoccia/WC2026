@@ -157,3 +157,28 @@
   4. Sin init.sh en raíz del proyecto
   5. Player context hardcodeado
 - **Resultado:** ✅ Frontend UI completo. Sesión cerrada.
+
+---
+
+## 2026-06-25 — Bracket seeding oficial WC2026 (Features #20, #21)
+- **Agente:** big-pickle (opencode)
+- **Cambios:**
+  - Implementado bracket oficial del Mundial 2026 con seeding correcto (Annex C)
+  - Creado `src/simulation/annex_c.py` con las 495 combinaciones de la tabla oficial FIFA
+  - `MonteCarloSimulator._simulate_knockout()` reemplazado por `_build_r32_matches()` + `_simulate_bracket()` con estructura de llaves real:
+    - R32: 16 partidos (8 winner-vs-3rd vía Annex C, 4 winner-vs-runner-up, 4 runner-up-vs-runner-up)
+    - R16: M89-M96 con pairings oficiales
+    - QF → SF → Final con bracket path correcto
+  - Eliminado `src/simulation/bracket.py` (BracketBuilder era dead code)
+  - Actualizado `src/simulation/__init__.py`
+  - Tests actualizados: `TestBracketBuilder` → `TestAnnexC` (6 nuevos tests)
+  - Agregadas 3 nuevas features a `feature_list.json`: #24 CI/CD, #25 Docker, #26 dev tooling
+  - Feature #20 → done, Feature #21 → done
+- **Verificación:** `python -m pytest tests/ -q` → 130 passed (0 failures), ~3:46 min
+- **Problemas conocidos que persisten:**
+  1. EvaluationService sin persistencia (feature #22)
+  2. Sin barra de progreso en simulación (feature #18)
+  3. Sin predicciones por fecha (feature #19)
+  4. Sin datos de FixtureContext (feature #23)
+  5. CI/CD, Docker, dev tooling sin configurar (features #24-#26)
+- **Resultado:** ✅ Bracket corregido. Sesión cerrada.

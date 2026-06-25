@@ -176,18 +176,21 @@
     {
       "id": 11,
       "name": "tests_and_docs",
-      "title": "Tests y documentación",
-      "description": "Tests unitarios y de integración para todos los módulos. init.sh funcional. README completo.",
-      "priority": "medium",
+      "title": "Tests, init.sh y documentación",
+      "description": "Tests unitarios y de integración para todos los módulos (cobertura actual: 0%). init.sh funcional en raíz. README completo.",
+      "priority": "high",
       "acceptance": [
-        "Tests para cada predictor (casos borde incluidos)",
-        "Tests para funciones de probabilidad (Poisson, Dixon-Coles, Elo)",
-        "Tests para simulación Monte Carlo",
-        "Tests para servicios y API endpoints",
-        "init.sh verifica entorno e importaciones",
+        "Tests para cada predictor (NullModel, FifaRanking, Elo, RecentForm, GoalModel, GoalPlusContext)",
+        "Tests para funciones de probabilidad (Poisson, Dixon-Coles, Elo expectation, Brier, RPS, LogLoss)",
+        "Tests para simulación Monte Carlo (grupos, desempates, bracket)",
+        "Tests para servicios (DataService, PredictionService, EvaluationService)",
+        "Tests para API endpoints (health, fixtures, groups, simulation, performance)",
+        "init.sh en raíz del proyecto verifica entorno virtual, dependencias e importaciones",
+        "init.sh termina sin errores",
         "README.md con setup, arquitectura, API docs"
       ],
-      "status": "pending"
+      "status": "done",
+      "notes": "121 tests (5 módulos: probability, predictors, simulation, services, api). init.sh en raíz verifica entorno, dependencias e importaciones. Bugfix: NaN en RecentFormModel._form_delta por scores NaN en histórico. Unifica #11 + #23 + #24."
     },
     {
       "id": 12,
@@ -303,6 +306,102 @@
         "Endpoint GET /fixtures/by-date?date=YYYY-MM-DD devuelve predicciones de ese día",
         "Vista /ui/fixtures/by-date con selector de fecha y tabla de resultados",
         "Los partidos ya jugados muestran el resultado real, los futuros la predicción"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 20,
+      "name": "fix_bracket_dead_code",
+      "title": "Resolver bracket.py como código muerto",
+      "description": "src/simulation/bracket.py define BracketBuilder pero nunca se usa en runtime. Solo se importa en __init__.py sin que ningún otro módulo lo referencie. El bracket real se hace inline en MonteCarloSimulator._simulate_knockout().",
+      "priority": "medium",
+      "acceptance": [
+        "BracketBuilder se integra con MonteCarloSimulator y se usa en el bracket real",
+        "O se elimina el archivo bracket.py y su import en __init__.py si se confirma que no es necesario",
+        "No queda código muerto en src/simulation/"
+      ],
+      "status": "done",
+      "notes": "Eliminado bracket.py (BracketBuilder) y su import en __init__.py. El bracket real ahora se implementa en MonteCarloSimulator con _build_r32_matches() + _simulate_bracket()."
+    },
+    {
+      "id": 21,
+      "name": "fix_bracket_seeding",
+      "title": "Corregir seeding del bracket eliminatorio",
+      "description": "MonteCarloSimulator._simulate_knockout() empareja equipos secuencialmente (posiciones 0-1, 2-3, 4-5...) sin respetar la estructura oficial de llaves del Mundial 2026 (12 ganadores de grupo + 12 segundos + 8 mejores terceros con slot_map específico: 1A vs 2C, 1D vs 2F, etc.).",
+      "priority": "high",
+      "acceptance": [
+        "El bracket sigue la estructura oficial de llaves del Mundial 2026",
+        "Los emparejamientos de R32 reflejan el slot_map correcto (1A vs 2C, 1D vs 2F, etc.)",
+        "Las probabilidades de campeón reflejan correctamente el bracket real",
+        "Integra o reemplaza el código de BracketBuilder en bracket.py"
+      ],
+      "status": "done",
+      "notes": "Implementado bracket oficial WC2026 con Annex C (495 combinaciones). R32: 16 partidos fijos (8 winner-vs-3rd + 4 winner-vs-runner-up + 4 runner-up-vs-runner-up). Bracket path correcto: R32→R16→QF→SF→Final con las llaves oficiales (M73-M96). Nuevo archivo src/simulation/annex_c.py con la lookup table completa. 130 tests verdes."
+    },
+    {
+      "id": 22,
+      "name": "evaluation_persistence",
+      "title": "Persistencia de datos de EvaluationService",
+      "description": "EvaluationService almacena evaluaciones en memoria (list[PredictionEvaluation]). Al reiniciar el servidor Uvicorn se pierden todos los datos históricos de performance de los predictores.",
+      "priority": "medium",
+      "acceptance": [
+        "Evaluaciones persisten en archivo JSON (similar a results.json)",
+        "Evaluaciones se cargan automáticamente al iniciar el servicio",
+        "No hay pérdida de datos entre reinicios del servidor"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 23,
+      "name": "fixture_context_data",
+      "title": "Poblar FixtureContext con datos reales (lesiones, sedes, disponibilidad)",
+      "description": "FixtureContext en fixture.py define campos para lesiones (home_unavailable_players, attack/defense_impact) pero generate_fixtures() nunca los puebla. Todos los 72 fixtures tienen FixtureContext() default: sin sede, sin datos de lesiones, is_neutral_site=False.",
+      "priority": "low",
+      "acceptance": [
+        "Cada fixture tiene venue/sede asignada correctamente",
+        "is_neutral_site configurado según corresponda (partidos en EEUU vs otras sedes)",
+        "Datos de lesiones/disponibilidad desde fuente externa o入力 manual opcional"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 24,
+      "name": "ci_cd_pipeline",
+      "title": "Pipeline CI/CD con GitHub Actions",
+      "description": "Configurar GitHub Actions para ejecutar tests automáticamente en push/PR, verificar linting y tipo, y opcionalmente deploy.",
+      "priority": "low",
+      "acceptance": [
+        "Workflow .github/workflows/ci.yml con trigger en push y PR a main",
+        "Instala dependencias desde requirements.txt",
+        "Ejecuta pytest tests/ exitosamente",
+        "Resultados visibles en GitHub Actions"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 25,
+      "name": "docker_container",
+      "title": "Dockerfile y containerización",
+      "description": "Crear Dockerfile para construir una imagen del servidor FastAPI, con .dockerignore y script de build.",
+      "priority": "low",
+      "acceptance": [
+        "Dockerfile multi-stage o slim que expone puerto 8000/8001",
+        ".dockerignore excluye __pycache__, .venv, .git, data/resultados",
+        "docker build && docker run funcionan sin errores"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 26,
+      "name": "dev_tooling",
+      "title": "Herramientas de desarrollo (coverage, linter, type checker)",
+      "description": "Agregar pytest-cov para cobertura, ruff para linting y mypy para type checking. Configurar en pyproject.toml.",
+      "priority": "low",
+      "acceptance": [
+        "pytest-cov instalado y configurado en pyproject.toml",
+        "ruff instalado y ejecutable sin errores",
+        "mypy instalado con configuración básica (o pyright)",
+        "Comandos documentados en README o scripts/"
       ],
       "status": "pending"
     }

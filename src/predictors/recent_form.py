@@ -59,6 +59,8 @@ class RecentFormModel(IPredictor):
             is_home = r.get("home_id") == team_id
             gf = r.get("home_score") if is_home else r.get("away_score")
             ga = r.get("away_score") if is_home else r.get("home_score")
+            if gf is None or ga is None or np.isnan(gf) or np.isnan(ga):
+                continue
             gd = gf - ga
             if gf > ga:
                 points = 3
