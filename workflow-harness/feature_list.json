@@ -293,7 +293,8 @@
         "El endpoint /simulation acepta un parámetro opcional para SSE o polling de progreso",
         "La experiencia de usuario mejora al saber cuánto falta para completar"
       ],
-      "status": "pending"
+      "status": "done",
+      "notes": "Implementado SSE en /simulation/stream con progreso en tiempo real. MonteCarloSimulator acepta progress_callback para reportar avance. La vista /ui/simulation carga instantánea y usa EventSource + barra animada. /simulation existente conserva comportamiento síncrono para compatibilidad."
     },
     {
       "id": 19,

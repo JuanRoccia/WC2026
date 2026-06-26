@@ -11,16 +11,20 @@ from src.simulation.annex_c import get_third_place_assignments
 
 
 class MonteCarloSimulator:
-    def __init__(self, predict_fn, team_ids: list[str] | None = None):
+    def __init__(self, predict_fn, team_ids: list[str] | None = None, progress_callback=None):
         self.predict_fn = predict_fn
         self.rng = np.random.default_rng(settings.simulation_seed)
         self._probs_cache: dict[tuple[str, str], OutcomeProbabilities] = {}
+        self._progress_callback = progress_callback
         if team_ids:
             self._precompute(team_ids)
 
     def _precompute(self, team_ids: list[str]):
-        for h, a in permutations(team_ids, 2):
+        total = len(list(permutations(team_ids, 2)))
+        for i, (h, a) in enumerate(permutations(team_ids, 2)):
             self._probs_cache[(h, a)] = self.predict_fn(h, a)
+            if self._progress_callback and i % max(1, total // 100) == 0:
+                self._progress_callback("precomputing", i + 1, total)
 
     def simulate(
         self,
@@ -31,10 +35,13 @@ class MonteCarloSimulator:
         n = num_simulations or settings.simulation_count
         progress: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
 
-        for _ in range(n):
+        report_interval = max(1, n // 20)
+        for iteration in range(n):
             results = self._simulate_tournament(groups)
             for team_id, stage in results.items():
                 progress[team_id][stage] += 1
+            if self._progress_callback and (iteration % report_interval == 0 or iteration == n - 1):
+                self._progress_callback("simulating", iteration + 1, n)
 
         team_probs = []
         for team_id, stages in progress.items():

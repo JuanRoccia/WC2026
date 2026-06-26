@@ -2,43 +2,96 @@
 {% block title %}Simulación{% endblock %}
 {% block content %}
 <h2 class="text-2xl font-bold mb-2">Simulación Monte Carlo</h2>
-<p class="text-sm text-gray-500 mb-4">{{ simulation_count }} simulaciones ejecutadas</p>
 
-{% if most_likely_champion %}
-<div class="bg-gradient-to-r from-yellow-900/30 to-fifa-900/30 border border-yellow-700/30 rounded-xl p-6 mb-6 text-center">
-  <p class="text-sm text-yellow-400">Campeón más probable</p>
-  <p class="text-3xl font-bold text-yellow-300">{{ most_likely_champion }}</p>
+<div id="progress-section" class="bg-gray-900/50 border border-gray-800 rounded-xl p-6 mb-6">
+  <div class="flex items-center justify-between mb-3">
+    <div>
+      <p class="text-sm text-gray-400" id="progress-label">Iniciando simulación...</p>
+      <p class="text-xs text-gray-600" id="progress-detail"></p>
+    </div>
+    <p class="text-lg font-mono text-fifa-400" id="progress-pct">0%</p>
+  </div>
+  <div class="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+    <div id="progress-bar" class="h-full bg-gradient-to-r from-fifa-600 to-fifa-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+  </div>
 </div>
-{% endif %}
 
-<div class="overflow-x-auto">
-  <table class="w-full text-sm">
-    <thead>
-      <tr class="text-left text-gray-400 border-b border-gray-800">
-        <th class="pb-2 pr-2">Equipo</th>
-        <th class="pb-2 pr-2 text-right">Campeón</th>
-        <th class="pb-2 pr-2 text-right">Final</th>
-        <th class="pb-2 pr-2 text-right">Semifinal</th>
-        <th class="pb-2 pr-2 text-right">Cuartos</th>
-        <th class="pb-2">Barra</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for tp in team_probs %}
-      <tr class="border-b border-gray-800/50 hover:bg-gray-900/50">
-        <td class="py-2 pr-2 font-medium">{{ tp.team_id }}</td>
-        <td class="py-2 pr-2 text-right font-mono">{{ "%.1f"|format(tp.champion_p) }}%</td>
-        <td class="py-2 pr-2 text-right font-mono">{{ "%.1f"|format(tp.final_p) }}%</td>
-        <td class="py-2 pr-2 text-right font-mono">{{ "%.1f"|format(tp.semifinals_p) }}%</td>
-        <td class="py-2 pr-2 text-right font-mono">{{ "%.1f"|format(tp.quarterfinals_p) }}%</td>
-        <td class="py-2">
-          <div class="w-32 h-2 bg-gray-800 rounded-full overflow-hidden">
-            <div class="h-full bg-fifa-500 rounded-full" style="width: {{ tp.champion_p }}%"></div>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div id="result-section" class="hidden">
+  <p class="text-sm text-gray-500 mb-4" id="sim-count"></p>
+
+  <div id="champion-card" class="bg-gradient-to-r from-yellow-900/30 to-fifa-900/30 border border-yellow-700/30 rounded-xl p-6 mb-6 text-center hidden">
+    <p class="text-sm text-yellow-400">Campeón más probable</p>
+    <p class="text-3xl font-bold text-yellow-300" id="champion-name"></p>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-gray-400 border-b border-gray-800">
+          <th class="pb-2 pr-2">Equipo</th>
+          <th class="pb-2 pr-2 text-right">Campeón</th>
+          <th class="pb-2 pr-2 text-right">Final</th>
+          <th class="pb-2 pr-2 text-right">Semifinal</th>
+          <th class="pb-2 pr-2 text-right">Cuartos</th>
+          <th class="pb-2">Barra</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </div>
 </div>
+
+<script>
+(function() {
+  var source = new EventSource("/simulation/stream?count=100");
+  var progressSection = document.getElementById("progress-section");
+  var resultSection = document.getElementById("result-section");
+
+  source.addEventListener("message", function(e) {
+    var data = JSON.parse(e.data);
+    var pct = Math.round((data.current / data.total) * 100);
+    document.getElementById("progress-bar").style.width = pct + "%";
+    document.getElementById("progress-pct").textContent = pct + "%";
+
+    var phaseLabel = data.phase === "precomputing" ? "Precomputando probabilidades" : "Ejecutando simulaciones";
+    document.getElementById("progress-label").textContent = phaseLabel;
+    document.getElementById("progress-detail").textContent = data.current + " / " + data.total;
+  });
+
+  source.addEventListener("complete", function(e) {
+    var data = JSON.parse(e.data);
+    source.close();
+
+    progressSection.classList.add("hidden");
+    resultSection.classList.remove("hidden");
+
+    document.getElementById("sim-count").textContent = data.simulation_count + " simulaciones ejecutadas";
+
+    if (data.most_likely_champion) {
+      var champCard = document.getElementById("champion-card");
+      champCard.classList.remove("hidden");
+      document.getElementById("champion-name").textContent = data.most_likely_champion;
+    }
+
+    var tbody = document.getElementById("results-body");
+    data.team_probs.forEach(function(tp) {
+      var tr = document.createElement("tr");
+      tr.className = "border-b border-gray-800/50 hover:bg-gray-900/50";
+      tr.innerHTML =
+        '<td class="py-2 pr-2 font-medium">' + tp.team_id + '</td>' +
+        '<td class="py-2 pr-2 text-right font-mono">' + tp.champion_p.toFixed(1) + '%</td>' +
+        '<td class="py-2 pr-2 text-right font-mono">' + tp.final_p.toFixed(1) + '%</td>' +
+        '<td class="py-2 pr-2 text-right font-mono">' + tp.semifinals_p.toFixed(1) + '%</td>' +
+        '<td class="py-2 pr-2 text-right font-mono">' + tp.quarterfinals_p.toFixed(1) + '%</td>' +
+        '<td class="py-2"><div class="w-32 h-2 bg-gray-800 rounded-full overflow-hidden"><div class="h-full bg-fifa-500 rounded-full" style="width: ' + tp.champion_p + '%"></div></div></td>';
+      tbody.appendChild(tr);
+    });
+  });
+
+  source.onerror = function() {
+    document.getElementById("progress-label").textContent = "Error en la simulación";
+    document.getElementById("progress-label").className = "text-sm text-red-400";
+  };
+})();
+</script>
 {% endblock %}

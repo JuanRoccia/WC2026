@@ -182,3 +182,20 @@
   4. Sin datos de FixtureContext (feature #23)
   5. CI/CD, Docker, dev tooling sin configurar (features #24-#26)
 - **Resultado:** ✅ Bracket corregido. Sesión cerrada.
+
+---
+
+## 2026-06-25 — Barra de progreso simulación Monte Carlo (Feature #18)
+- **Agente:** big-pickle (opencode)
+- **Cambios:**
+  - `MonteCarloSimulator.__init__` acepta `progress_callback` opcional, reporta avance en `_precompute` y `simulate`
+  - Nuevo endpoint SSE `/simulation/stream?count=N` que transmite progreso en tiempo real
+  - `/ui/simulation` ahora carga instantáneamente (sin bloquear por simulación)
+  - `simulation.html` reescrito: barra de progreso animada con EventSource, resultados se muestran al completar
+  - `/simulation` (JSON) conserva comportamiento síncrono para compatibilidad
+- **Archivos modificados:**
+  - `src/simulation/monte_carlo.py` — progress_callback en constructor, _precompute, simulate
+  - `src/web/routes.py` — nuevo /simulation/stream, /ui/simulation simplificado
+  - `src/web/templates/simulation.html` — progress bar + EventSource JS
+- **Verificación:** `python -m pytest tests/ -q` → 130 passed (~3.5 min)
+- **Resultado:** ✅ Feature #18 completada. Sesión cerrada.

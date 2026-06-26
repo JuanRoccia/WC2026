@@ -1,5 +1,8 @@
+import json
+import asyncio
+import threading
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from src.services.prediction_service import PredictionService
@@ -118,27 +121,9 @@ async def ui_groups(request: Request):
 
 @router.get("/ui/simulation", response_class=HTMLResponse)
 async def ui_simulation(request: Request):
-    sim = MonteCarloSimulator(pred_svc.predict_direct, all_team_ids)
-    groups: dict[str, list] = {}
-    for f in pred_svc.data["fixtures"]:
-        groups.setdefault(f.group_name, []).append(f)
-    result = sim.simulate(groups, [], num_simulations=100)
-    team_probs = [
-        {
-            "team_id": tp.team_id,
-            "champion_p": round(tp.champion_p * 100, 1),
-            "final_p": round(tp.final_p * 100, 1),
-            "semifinals_p": round(tp.semifinals_p * 100, 1),
-            "quarterfinals_p": round(tp.quarterfinals_p * 100, 1),
-        }
-        for tp in sorted(result.team_probabilities, key=lambda x: -x.champion_p)
-    ]
     return templates.TemplateResponse("simulation.html", {
         "request": request,
         "active": "simulation",
-        "simulation_count": result.simulation_count,
-        "most_likely_champion": result.most_likely_champion,
-        "team_probs": team_probs,
     })
 
 
@@ -308,6 +293,60 @@ async def run_simulation(count: int | None = None):
             for tp in sorted(result.team_probabilities, key=lambda x: -x.champion_p)[:20]
         ],
     }
+
+
+@router.get("/simulation/stream")
+async def simulation_stream(count: int = 100):
+    async def event_generator():
+        queue: asyncio.Queue = asyncio.Queue()
+        loop = asyncio.get_event_loop()
+
+        def progress(phase: str, current: int, total: int):
+            data = json.dumps({"phase": phase, "current": current, "total": total})
+            loop.call_soon_threadsafe(queue.put_nowait, data)
+
+        def run():
+            sim = MonteCarloSimulator(pred_svc.predict_direct, all_team_ids, progress_callback=progress)
+            groups: dict[str, list] = {}
+            for f in pred_svc.data["fixtures"]:
+                groups.setdefault(f.group_name, []).append(f)
+            result = sim.simulate(groups, [], num_simulations=count)
+            loop.call_soon_threadsafe(queue.put_nowait, None)
+            return result
+
+        sim_result: list = []
+        def run_and_capture():
+            sim_result.append(run())
+
+        thread = threading.Thread(target=run_and_capture, daemon=True)
+        thread.start()
+
+        while True:
+            try:
+                msg = await asyncio.wait_for(queue.get(), timeout=0.5)
+                if msg is None:
+                    break
+                yield f"data: {msg}\n\n"
+            except asyncio.TimeoutError:
+                if not thread.is_alive():
+                    break
+                continue
+
+        result = sim_result[0] if sim_result else None
+        if result:
+            team_probs = [
+                {
+                    "team_id": tp.team_id,
+                    "champion_p": round(tp.champion_p * 100, 1),
+                    "final_p": round(tp.final_p * 100, 1),
+                    "semifinals_p": round(tp.semifinals_p * 100, 1),
+                    "quarterfinals_p": round(tp.quarterfinals_p * 100, 1),
+                }
+                for tp in sorted(result.team_probabilities, key=lambda x: -x.champion_p)
+            ]
+            yield f"event: complete\ndata: {json.dumps({'simulation_count': result.simulation_count, 'most_likely_champion': result.most_likely_champion, 'team_probs': team_probs})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.post("/fixtures/{fixture_id}/result")
