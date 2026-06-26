@@ -1,6 +1,7 @@
 import json
 import asyncio
 import threading
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
@@ -66,6 +67,49 @@ async def ui_fixtures(request: Request):
             } if pred and pred.best_prediction else None,
         })
     return templates.TemplateResponse("fixtures.html", {"request": request, "active": "fixtures", "fixtures": fixtures})
+
+
+@router.get("/ui/fixtures/by-date", response_class=HTMLResponse)
+async def ui_fixtures_by_date(request: Request, date: str | None = None):
+    fixtures = []
+    selected_date = date
+
+    all_dates = sorted({
+        f.kickoff.date() for f in pred_svc.data["fixtures"]
+        if f.kickoff is not None
+    })
+
+    if date:
+        try:
+            target_date = datetime.strptime(date, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format")
+
+        for f in pred_svc.data["fixtures"]:
+            if f.kickoff and f.kickoff.date() == target_date:
+                pred = pred_svc.predict_match(f.id)
+                fixtures.append({
+                    "id": f.id,
+                    "group": f.group_name,
+                    "home_team": f.home_team_name,
+                    "away_team": f.away_team_name,
+                    "kickoff": f.kickoff,
+                    "is_played": f.is_played,
+                    "result": {"home_goals": f.result.home_goals, "away_goals": f.result.away_goals} if f.result else None,
+                    "prediction": {
+                        "home_win": round(pred.best_prediction.outcome.home_win * 100, 1),
+                        "draw": round(pred.best_prediction.outcome.draw * 100, 1),
+                        "away_win": round(pred.best_prediction.outcome.away_win * 100, 1),
+                    } if pred and pred.best_prediction else None,
+                })
+
+    return templates.TemplateResponse("fixtures_by_date.html", {
+        "request": request,
+        "active": "bydate",
+        "fixtures": fixtures,
+        "dates": [d.isoformat() for d in all_dates],
+        "selected_date": selected_date,
+    })
 
 
 @router.get("/ui/fixtures/{fixture_id}", response_class=HTMLResponse)
@@ -195,6 +239,39 @@ async def get_fixtures():
             } if pred else None,
         })
     return {"fixtures": results}
+
+
+@router.get("/fixtures/by-date")
+async def get_fixtures_by_date(date: str):
+    try:
+        target_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+
+    fixtures = []
+    for f in pred_svc.data["fixtures"]:
+        if f.kickoff and f.kickoff.date() == target_date:
+            pred = pred_svc.predict_match(f.id)
+            fixtures.append({
+                "id": f.id,
+                "group": f.group_name,
+                "home_team": f.home_team_name,
+                "away_team": f.away_team_name,
+                "kickoff": f.kickoff.isoformat(),
+                "is_played": f.is_played,
+                "result": {
+                    "home_goals": f.result.home_goals,
+                    "away_goals": f.result.away_goals,
+                } if f.result else None,
+                "prediction": {
+                    "home_win": round(pred.best_prediction.outcome.home_win * 100, 1),
+                    "draw": round(pred.best_prediction.outcome.draw * 100, 1),
+                    "away_win": round(pred.best_prediction.outcome.away_win * 100, 1),
+                    "selected_predictor": pred.selected_predictor,
+                    "most_likely_score": pred.best_prediction.most_likely_score,
+                } if pred else None,
+            })
+    return {"date": date, "fixtures": fixtures}
 
 
 @router.get("/fixtures/{fixture_id}")

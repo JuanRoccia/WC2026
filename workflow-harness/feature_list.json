@@ -308,7 +308,8 @@
         "Vista /ui/fixtures/by-date con selector de fecha y tabla de resultados",
         "Los partidos ya jugados muestran el resultado real, los futuros la predicción"
       ],
-      "status": "pending"
+      "status": "done",
+      "notes": "Schedule de 12 grupos (Jun 11-27) en loader.py con _GROUP_MATCHDAY_DATES + _matchday(). Todos los 72 fixtures tienen kickoff datetime. JSON endpoint /fixtures/by-date y UI en /ui/fixtures/by-date con date picker y tabla. Nav link 'Por Fecha' en base.html. 11 tests nuevos."
     },
     {
       "id": 20,

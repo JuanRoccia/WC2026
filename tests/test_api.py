@@ -52,6 +52,48 @@ class TestFixtures:
         response = client.get("/fixtures/nonexistent")
         assert response.status_code == 404
 
+    def test_fixtures_have_kickoff(self):
+        response = client.get("/fixtures/by-date?date=2026-06-11")
+        data = response.json()
+        for f in data["fixtures"]:
+            assert "kickoff" in f
+            assert f["kickoff"] is not None
+
+    def test_fixtures_by_date_opening_day(self):
+        response = client.get("/fixtures/by-date?date=2026-06-11")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["date"] == "2026-06-11"
+        assert len(data["fixtures"]) == 2
+        for f in data["fixtures"]:
+            assert f["group"] == "A"
+
+    def test_fixtures_by_date_invalid(self):
+        response = client.get("/fixtures/by-date?date=not-a-date")
+        assert response.status_code == 400
+
+    def test_fixtures_by_date_no_matches(self):
+        response = client.get("/fixtures/by-date?date=2026-07-01")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["fixtures"]) == 0
+
+    def test_fixtures_by_date_round3_groups_ab(self):
+        response = client.get("/fixtures/by-date?date=2026-06-24")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["fixtures"]) == 4
+        groups = {f["group"] for f in data["fixtures"]}
+        assert groups == {"A", "B"}
+
+    def test_fixtures_by_date_final_day(self):
+        response = client.get("/fixtures/by-date?date=2026-06-27")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["fixtures"]) == 8
+        groups = {f["group"] for f in data["fixtures"]}
+        assert groups == {"I", "J", "K", "L"}
+
 
 class TestGroups:
     def test_get_groups(self):
@@ -186,3 +228,14 @@ class TestUI:
     def test_ui_fixture_detail_not_found(self):
         response = client.get("/ui/fixtures/nonexistent")
         assert response.status_code == 404
+
+    def test_ui_fixtures_by_date(self):
+        response = client.get("/ui/fixtures/by-date")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+
+    def test_ui_fixtures_by_date_with_date(self):
+        response = client.get("/ui/fixtures/by-date?date=2026-06-11")
+        assert response.status_code == 200
+        assert "Mexico" in response.text
+        assert "South Africa" in response.text
