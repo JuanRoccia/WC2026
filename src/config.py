@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     db_path: str = str(Path(__file__).parent.parent / "data" / "wc2026.db")
     data_dir: str = str(Path(__file__).parent.parent / "data")
     results_file: str = str(Path(__file__).parent.parent / "data" / "results.json")
+    schedule_url: str = ""
 
     class Config:
         env_prefix = "WC2026_"

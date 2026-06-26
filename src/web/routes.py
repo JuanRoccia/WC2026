@@ -274,6 +274,20 @@ async def get_fixtures_by_date(date: str):
     return {"date": date, "fixtures": fixtures}
 
 
+@router.post("/fixtures/schedule/refresh")
+async def refresh_fixtures_schedule(url: str | None = None):
+    from src.data.loader import CsvLoader
+    loader = CsvLoader()
+    ok = loader.refresh_fixtures_schedule(url or settings.schedule_url)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Failed to refresh schedule")
+    schedule = loader.load_fixtures_schedule()
+    if schedule:
+        loader.apply_schedule(pred_svc.data["fixtures"], schedule)
+        pred_svc.invalidate_direct_cache()
+    return {"status": "ok", "fixtures_updated": len(schedule)}
+
+
 @router.get("/fixtures/{fixture_id}")
 async def get_fixture_detail(fixture_id: str):
     result = pred_svc.predict_match(fixture_id)

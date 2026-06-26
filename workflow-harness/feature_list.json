@@ -309,7 +309,7 @@
         "Los partidos ya jugados muestran el resultado real, los futuros la predicción"
       ],
       "status": "done",
-      "notes": "Schedule de 12 grupos (Jun 11-27) en loader.py con _GROUP_MATCHDAY_DATES + _matchday(). Todos los 72 fixtures tienen kickoff datetime. JSON endpoint /fixtures/by-date y UI en /ui/fixtures/by-date con date picker y tabla. Nav link 'Por Fecha' en base.html. 11 tests nuevos."
+      "notes": "Fixture schedule oficial de FIFA cargado desde data/fixtures_schedule.json (72 partidos, 17 días, 16 estadios). CsvLoader.load_fixtures_schedule() + apply_schedule() reemplazan el hardcodeo anterior. POST /fixtures/schedule/refresh para recargar desde URL externa. Config schedule_url en Settings. Venue poblado en cada fixture."
     },
     {
       "id": 20,

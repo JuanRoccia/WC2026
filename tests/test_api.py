@@ -78,21 +78,21 @@ class TestFixtures:
         data = response.json()
         assert len(data["fixtures"]) == 0
 
-    def test_fixtures_by_date_round3_groups_ab(self):
+    def test_fixtures_by_date_round3_groups_abc(self):
         response = client.get("/fixtures/by-date?date=2026-06-24")
         assert response.status_code == 200
         data = response.json()
-        assert len(data["fixtures"]) == 4
+        assert len(data["fixtures"]) == 6
         groups = {f["group"] for f in data["fixtures"]}
-        assert groups == {"A", "B"}
+        assert groups == {"A", "B", "C"}
 
     def test_fixtures_by_date_final_day(self):
         response = client.get("/fixtures/by-date?date=2026-06-27")
         assert response.status_code == 200
         data = response.json()
-        assert len(data["fixtures"]) == 8
+        assert len(data["fixtures"]) == 6
         groups = {f["group"] for f in data["fixtures"]}
-        assert groups == {"I", "J", "K", "L"}
+        assert groups == {"J", "K", "L"}
 
 
 class TestGroups:
@@ -155,6 +155,15 @@ class TestPredictorLab:
         response = client.get("/predictor/lab?home=nonexistent&away=brazil")
         assert response.status_code in (200, 400)
 
+
+class TestScheduleRefresh:
+    def test_refresh_endpoint_requires_url(self):
+        response = client.post("/fixtures/schedule/refresh")
+        assert response.status_code == 400
+
+    def test_refresh_with_bad_url(self):
+        response = client.post("/fixtures/schedule/refresh?url=https://not-a-real-url.fake/data.json")
+        assert response.status_code == 400
 
 class TestRankings:
     def test_elo_rankings(self):

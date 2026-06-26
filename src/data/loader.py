@@ -1,32 +1,10 @@
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
+import json
 import pandas as pd
 from src.models.team import Team, Group
 from src.models.fixture import Fixture
 from src.models.rating import Rating, RatingType
-
-
-# WC2026 group stage schedule: (round1, round2, round3) per group
-# Matchday 1: Jun 11-17, Matchday 2: Jun 18-23, Matchday 3: Jun 24-27
-_GROUP_MATCHDAY_DATES: dict[str, tuple[date, date, date]] = {
-    "A": (date(2026, 6, 11), date(2026, 6, 17), date(2026, 6, 24)),
-    "B": (date(2026, 6, 12), date(2026, 6, 18), date(2026, 6, 24)),
-    "C": (date(2026, 6, 13), date(2026, 6, 19), date(2026, 6, 25)),
-    "D": (date(2026, 6, 12), date(2026, 6, 19), date(2026, 6, 25)),
-    "E": (date(2026, 6, 13), date(2026, 6, 20), date(2026, 6, 25)),
-    "F": (date(2026, 6, 14), date(2026, 6, 20), date(2026, 6, 26)),
-    "G": (date(2026, 6, 14), date(2026, 6, 21), date(2026, 6, 26)),
-    "H": (date(2026, 6, 15), date(2026, 6, 21), date(2026, 6, 26)),
-    "I": (date(2026, 6, 15), date(2026, 6, 22), date(2026, 6, 27)),
-    "J": (date(2026, 6, 16), date(2026, 6, 22), date(2026, 6, 27)),
-    "K": (date(2026, 6, 16), date(2026, 6, 23), date(2026, 6, 27)),
-    "L": (date(2026, 6, 17), date(2026, 6, 23), date(2026, 6, 27)),
-}
-
-
-def _matchday(local_idx: int) -> int:
-    """Map fixture index within group (0-5) to matchday (1, 2, or 3)."""
-    return {0: 1, 1: 2, 2: 3, 3: 3, 4: 2, 5: 1}[local_idx]
 
 
 class CsvLoader:
@@ -91,22 +69,54 @@ class CsvLoader:
         fixture_id = 1
         for group in groups:
             teams = group.teams
-            group_dates = _GROUP_MATCHDAY_DATES.get(group.name)
-            for idx, (i, j) in enumerate([(i, j) for i in range(len(teams)) for j in range(i + 1, len(teams))]):
-                f = Fixture(
-                    id=f"group_{group.name}_{fixture_id}",
-                    group_name=group.name,
-                    home_team_id=teams[i].id,
-                    away_team_id=teams[j].id,
-                    home_team_name=teams[i].name,
-                    away_team_name=teams[j].name,
-                )
-                if group_dates:
-                    md = _matchday(idx)
-                    f.kickoff = datetime.combine(group_dates[md - 1], datetime.min.time())
-                fixtures.append(f)
-                fixture_id += 1
+            for i in range(len(teams)):
+                for j in range(i + 1, len(teams)):
+                    fixtures.append(Fixture(
+                        id=f"group_{group.name}_{fixture_id}",
+                        group_name=group.name,
+                        home_team_id=teams[i].id,
+                        away_team_id=teams[j].id,
+                        home_team_name=teams[i].name,
+                        away_team_name=teams[j].name,
+                    ))
+                    fixture_id += 1
         return fixtures
+
+    def load_fixtures_schedule(self, filename: str = "fixtures_schedule.json") -> list[dict]:
+        path = self.data_dir / filename
+        if not path.exists():
+            return []
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+
+    def apply_schedule(self, fixtures: list[Fixture], schedule: list[dict]):
+        schedule_map: dict[tuple[str, str, str], dict] = {}
+        for entry in schedule:
+            key = (entry["group"], entry["home_team"], entry["away_team"])
+            schedule_map[key] = entry
+
+        for f in fixtures:
+            direct = schedule_map.get((f.group_name, f.home_team_name, f.away_team_name))
+            swapped = schedule_map.get((f.group_name, f.away_team_name, f.home_team_name))
+            entry = direct or swapped
+            if entry:
+                f.kickoff = datetime.fromisoformat(entry["date"])
+                f.venue = entry.get("venue", "")
+
+    def refresh_fixtures_schedule(self, url: str | None = None, filename: str = "fixtures_schedule.json") -> bool:
+        if not url:
+            return False
+        try:
+            import requests
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+            data = resp.json()
+            path = self.data_dir / filename
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            return True
+        except Exception:
+            return False
 
 
 def load_all_data(data_dir: str = "data") -> dict:
@@ -116,6 +126,9 @@ def load_all_data(data_dir: str = "data") -> dict:
     fifa_ratings = loader.load_fifa_rankings()
     historical = loader.load_historical_results()
     fixtures = loader.generate_fixtures(groups)
+    schedule = loader.load_fixtures_schedule()
+    if schedule:
+        loader.apply_schedule(fixtures, schedule)
     return {
         "groups": groups,
         "fixtures": fixtures,
